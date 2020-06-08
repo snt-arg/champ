@@ -110,6 +110,8 @@ class QuadrupedController
     std::string base_link_frame_;
 
     bool in_gazebo_;
+    
+    bool controller_started_;
 
     void controlLoop_(const ros::TimerEvent& event);
     void publishJoints_(const ros::TimerEvent& event);

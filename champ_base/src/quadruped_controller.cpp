@@ -34,7 +34,8 @@ QuadrupedController::QuadrupedController(const ros::NodeHandle &node_handle,
     body_controller_(base_),
     leg_controller_(base_),
     kinematics_(base_),
-    odometry_(base_)
+    odometry_(base_),
+    controller_started_(false)
 {
     cmd_vel_subscriber_ = nh_.subscribe("cmd_vel/smooth", 1, &QuadrupedController::cmdVelCallback_, this);
     cmd_pose_subscriber_ = nh_.subscribe("cmd_pose", 1, &QuadrupedController::cmdPoseCallback_, this);
@@ -120,6 +121,11 @@ void QuadrupedController::controlLoop_(const ros::TimerEvent& event)
     base_.updateJointPositions(current_joint_positions_);
     base_.getFootPositions(current_foot_positions_);
     odometry_.getVelocities(current_velocities_);
+
+    if(!controller_started_)
+    {
+        controller_started_ = true;
+    }
 }
 
 void QuadrupedController::cmdVelCallback_(const geometry_msgs::Twist::ConstPtr& msg)
@@ -158,7 +164,11 @@ void QuadrupedController::publishJoints_(const ros::TimerEvent& event)
         }
 
         joints_cmd_msg.points.push_back(point);
-        joint_commands_publisher_.publish(joints_cmd_msg);
+        
+        if(controller_started_)
+        {
+            joint_commands_publisher_.publish(joints_cmd_msg);
+        }
     }
     else
     {   
@@ -174,7 +184,10 @@ void QuadrupedController::publishJoints_(const ros::TimerEvent& event)
             joints_msg.position[i]= current_joint_positions_[i];
         }
 
-        joint_states_publisher_.publish(joints_msg);
+        if(controller_started_)
+        {
+            joint_states_publisher_.publish(joints_msg);
+        }
     }
 }
 
@@ -230,7 +243,10 @@ void QuadrupedController::publishVelocities_(const ros::TimerEvent& event)
     odom.twist.covariance[7] = 0.001;
     odom.twist.covariance[35] = 0.001;
 
-    velocities_publisher_.publish(odom);
+    if(controller_started_)
+    {
+        velocities_publisher_.publish(odom);
+    }
 }
 
 visualization_msgs::Marker QuadrupedController::createMarker(geometry::Transformation foot_pos, int id, std::string frame_id)
@@ -336,5 +352,8 @@ void QuadrupedController::publishFootPositions_(const ros::TimerEvent& event)
     transformStamped.transform.rotation.z = quaternion.z();
     transformStamped.transform.rotation.w = -quaternion.w();
 
-    base_broadcaster_.sendTransform(transformStamped);    
+    if(controller_started_)
+    {
+        base_broadcaster_.sendTransform(transformStamped);    
+    }
 }
