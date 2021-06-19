@@ -67,9 +67,9 @@ StateEstimation::StateEstimation(ros::NodeHandle *nh, ros::NodeHandle *pnh):
         node_namespace_ = "";
     }
 
-    odom_frame_ = node_namespace_ + "odom";
-    base_footprint_frame_ = node_namespace_ + "base_footprint";
-    base_link_frame_ = node_namespace_ + base_name_;
+    odom_frame_ = "odom";
+    base_footprint_frame_ = "base_footprint";
+    base_link_frame_ = base_name_;
 
     odom_data_timer_ = pnh->createTimer(ros::Duration(0.02),
                                         &StateEstimation::publishFootprintToOdom_, 
